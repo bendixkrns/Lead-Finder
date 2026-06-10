@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useReducer, useCallback } from 'react';
 import { RAW_BUSINESSES } from './data/mockData';
 import { enrichBusiness } from './utils/scoring';
-import { exportCSV } from './utils/export';
+import { exportCSV, exportExcel } from './utils/export';
 import SearchPanel from './components/SearchPanel';
 import FilterBar from './components/FilterBar';
 import BusinessCard from './components/BusinessCard';
@@ -106,6 +106,8 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(true); // show mock data on load
+  const [isLive, setIsLive] = useState(false);
+  const [apiError, setApiError] = useState(null);
 
   const handleConfigChange = useCallback((patch) => {
     setSearchConfig((prev) => ({ ...prev, ...patch }));
@@ -115,15 +117,35 @@ export default function App() {
     setFilters((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback(async () => {
     setLoading(true);
-    setTimeout(() => {
-      dispatch({ type: 'LOAD', businesses: RAW_BUSINESSES.map(enrichBusiness) });
+    setApiError(null);
+    try {
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(searchConfig),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const { businesses: raw } = await res.json();
+      dispatch({ type: 'LOAD', businesses: raw.map(enrichBusiness) });
+      setIsLive(true);
       setSearched(true);
       setFilters(DEFAULT_FILTERS);
+    } catch (err) {
+      setApiError(err.message);
+      // Fall back to mock data so the UI is still usable
+      dispatch({ type: 'LOAD', businesses: RAW_BUSINESSES.map(enrichBusiness) });
+      setIsLive(false);
+      setSearched(true);
+      setFilters(DEFAULT_FILTERS);
+    } finally {
       setLoading(false);
-    }, 900);
-  }, []);
+    }
+  }, [searchConfig]);
 
   const handleUpdate = useCallback((id, patch) => {
     dispatch({ type: 'UPDATE', id, patch });
@@ -207,39 +229,80 @@ export default function App() {
 
         <div className="flex items-center gap-2">
           {searched && (
-            <button
-              onClick={() => exportCSV(visibleBusinesses)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              style={{ background: '#21253A', color: '#8B8FA8', border: '1px solid #2A2D3E' }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#6C63FF'; e.currentTarget.style.color = '#6C63FF'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2A2D3E'; e.currentTarget.style.color = '#8B8FA8'; }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              CSV Export
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => exportExcel(visibleBusinesses)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{ background: '#21253A', color: '#8B8FA8', border: '1px solid #2A2D3E' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4ECDC4'; e.currentTarget.style.color = '#4ECDC4'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2A2D3E'; e.currentTarget.style.color = '#8B8FA8'; }}
+                title="Als Excel exportieren"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Excel
+              </button>
+              <button
+                onClick={() => exportCSV(visibleBusinesses)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{ background: '#21253A', color: '#8B8FA8', border: '1px solid #2A2D3E' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#6C63FF'; e.currentTarget.style.color = '#6C63FF'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2A2D3E'; e.currentTarget.style.color = '#8B8FA8'; }}
+                title="Als CSV exportieren"
+              >
+                CSV
+              </button>
+            </div>
           )}
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6">
-        {/* Demo banner */}
+        {/* Status banner */}
         <div
           className="rounded-lg px-4 py-2.5 mb-5 flex items-start gap-2.5 text-xs"
-          style={{ background: 'rgba(108,99,255,0.08)', border: '1px solid rgba(108,99,255,0.2)' }}
+          style={{
+            background: isLive ? 'rgba(78,205,196,0.08)' : 'rgba(108,99,255,0.08)',
+            border: `1px solid ${isLive ? 'rgba(78,205,196,0.25)' : 'rgba(108,99,255,0.2)'}`,
+          }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" strokeWidth="2" className="mt-0.5 shrink-0">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke={isLive ? '#4ECDC4' : '#6C63FF'} strokeWidth="2" className="mt-0.5 shrink-0">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <span style={{ color: '#8B8FA8' }}>
-            <span style={{ color: '#6C63FF', fontWeight: 600 }}>Demo-Modus:</span>{' '}
-            Zeigt Beispieldaten für die Region Trier. Für echte Daten: Backend-Integration mit
-            Google Places API + PageSpeed Insights API erforderlich.
+            {isLive ? (
+              <><span style={{ color: '#4ECDC4', fontWeight: 600 }}>Live-Modus:</span>{' '}
+              Echte Google Places Daten · PageSpeed Scores in Echtzeit berechnet.</>
+            ) : (
+              <><span style={{ color: '#6C63FF', fontWeight: 600 }}>Demo-Modus:</span>{' '}
+              Zeigt Beispieldaten für die Region Trier. Für echte Daten: Backend mit{' '}
+              <code style={{ color: '#6C63FF' }}>npm run dev:all</code> starten und{' '}
+              <code style={{ color: '#6C63FF' }}>.env</code> mit Google API Key befüllen.</>
+            )}
           </span>
         </div>
+
+        {/* API error */}
+        {apiError && (
+          <div className="rounded-lg px-4 py-2.5 mb-4 flex items-start gap-2.5 text-xs"
+            style={{ background: 'rgba(255,77,109,0.08)', border: '1px solid rgba(255,77,109,0.25)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="#FF4D6D" strokeWidth="2" className="mt-0.5 shrink-0">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span style={{ color: '#FF4D6D' }}>
+              <span style={{ fontWeight: 600 }}>API Fehler:</span> {apiError} — Demo-Daten werden angezeigt.
+            </span>
+          </div>
+        )}
 
         {/* Page title */}
         <div className="mb-6">
