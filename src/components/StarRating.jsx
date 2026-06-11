@@ -12,22 +12,22 @@ export default function StarRating({ rating, count }) {
             <svg key={i} width="12" height="12" viewBox="0 0 24 24" fill="none">
               {filled ? (
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                  fill="#FFB347" />
+                  fill="#FF9500" />
               ) : half ? (
                 <>
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77V2z" fill="#FFB347" />
-                  <path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#2A2D3E" />
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77V2z" fill="#FF9500" />
+                  <path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#E5E5EA" />
                 </>
               ) : (
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                  fill="#2A2D3E" />
+                  fill="#E5E5EA" />
               )}
             </svg>
           );
         })}
       </div>
-      <span className="text-xs font-medium" style={{ color: '#E8E8F0' }}>{rating}</span>
-      <span className="text-xs" style={{ color: '#5A5E78' }}>({count})</span>
+      <span className="text-xs font-medium" style={{ color: '#1D1D1F' }}>{rating}</span>
+      <span className="text-xs" style={{ color: '#C7C7CC' }}>({count})</span>
     </div>
   );
 }

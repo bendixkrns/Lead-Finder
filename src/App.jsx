@@ -30,41 +30,36 @@ const DEFAULT_FILTERS = {
   sortDir: 'asc',
 };
 
-const PRIORITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+const PRIORITY_ORDER = { HOCH: 0, MITTEL: 1, NIEDRIG: 2 };
 
 // ─── Stats bar ─────────────────────────────────────────────────────────────
 function StatsBar({ businesses }) {
   const stats = useMemo(() => {
-    const high = businesses.filter((b) => b.priorität === 'HIGH').length;
-    const medium = businesses.filter((b) => b.priorität === 'MEDIUM').length;
-    const low = businesses.filter((b) => b.priorität === 'LOW').length;
+    const hoch = businesses.filter((b) => b.priorität === 'HOCH').length;
+    const mittel = businesses.filter((b) => b.priorität === 'MITTEL').length;
+    const niedrig = businesses.filter((b) => b.priorität === 'NIEDRIG').length;
     const noSite = businesses.filter((b) => !b.website).length;
     const avgScore = businesses
       .filter((b) => b.gesamtScore !== null)
       .reduce((sum, b, _, arr) => sum + b.gesamtScore / arr.length, 0);
-    return { high, medium, low, noSite, avgScore: Math.round(avgScore * 10) / 10 };
+    return { hoch, mittel, niedrig, noSite, avgScore: Math.round(avgScore * 10) / 10 };
   }, [businesses]);
 
   const tiles = [
-    { label: 'HIGH Leads', value: stats.high, color: '#FF4D6D', bg: 'rgba(255,77,109,0.1)' },
-    { label: 'MEDIUM Leads', value: stats.medium, color: '#FFB347', bg: 'rgba(255,179,71,0.1)' },
-    { label: 'LOW Leads', value: stats.low, color: '#4ECDC4', bg: 'rgba(78,205,196,0.1)' },
-    { label: 'Ohne Website', value: stats.noSite, color: '#FF4D6D', bg: 'rgba(255,77,109,0.08)' },
-    { label: 'Ø Score', value: stats.avgScore || '–', color: '#6C63FF', bg: 'rgba(108,99,255,0.1)' },
+    { label: 'Hohe Priorität', value: stats.hoch, color: '#FF3B30', bg: 'rgba(255,59,48,0.06)' },
+    { label: 'Mittlere Priorität', value: stats.mittel, color: '#FF9500', bg: 'rgba(255,149,0,0.06)' },
+    { label: 'Niedrige Priorität', value: stats.niedrig, color: '#34C759', bg: 'rgba(52,199,89,0.06)' },
+    { label: 'Ohne Website', value: stats.noSite, color: '#FF3B30', bg: 'rgba(255,59,48,0.06)' },
+    { label: 'Ø Score', value: stats.avgScore || '–', color: '#007AFF', bg: 'rgba(0,122,255,0.06)' },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
       {tiles.map(({ label, value, color, bg }) => (
-        <div
-          key={label}
-          className="rounded-xl p-3 text-center"
-          style={{ background: bg, border: `1px solid ${color}22` }}
-        >
-          <div className="text-2xl font-bold mb-0.5" style={{ color }}>
-            {value}
-          </div>
-          <div className="text-xs" style={{ color: '#8B8FA8' }}>{label}</div>
+        <div key={label} className="rounded-2xl p-3 text-center"
+          style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.07)', border: `1.5px solid ${bg.replace('0.06', '0.15')}` }}>
+          <div className="text-2xl font-bold mb-0.5" style={{ color }}>{value}</div>
+          <div className="text-xs" style={{ color: '#6E6E73' }}>{label}</div>
         </div>
       ))}
     </div>
@@ -75,20 +70,17 @@ function StatsBar({ businesses }) {
 function EmptyState({ hasFilters, onReset }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="mb-3" style={{ color: '#5A5E78' }}>
+      <div className="mb-3" style={{ color: '#C7C7CC' }}>
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto">
           <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
         </svg>
       </div>
-      <p className="text-sm font-medium mb-1" style={{ color: '#8B8FA8' }}>
+      <p className="text-sm font-medium mb-1" style={{ color: '#6E6E73' }}>
         {hasFilters ? 'Keine Ergebnisse für diese Filter' : 'Keine Leads geladen'}
       </p>
       {hasFilters && (
-        <button
-          onClick={onReset}
-          className="mt-3 text-xs px-3 py-1.5 rounded-lg"
-          style={{ background: 'rgba(108,99,255,0.15)', color: '#6C63FF', border: '1px solid rgba(108,99,255,0.3)' }}
-        >
+        <button onClick={onReset} className="mt-3 text-xs px-3 py-1.5 rounded-xl"
+          style={{ background: 'rgba(0,122,255,0.08)', color: '#007AFF', border: '1.5px solid rgba(0,122,255,0.2)' }}>
           Filter zurücksetzen
         </button>
       )}
@@ -201,43 +193,34 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen" style={{ background: '#0F1117' }}>
+    <div className="min-h-screen" style={{ background: '#F5F5F7' }}>
       {/* Top nav */}
-      <header
-        className="sticky top-0 z-40 px-6 py-3 flex items-center justify-between"
-        style={{ background: 'rgba(15,17,23,0.95)', borderBottom: '1px solid #2A2D3E', backdropFilter: 'blur(8px)' }}
-      >
+      <header className="sticky top-0 z-40 px-5 py-3 flex items-center justify-between"
+        style={{ background: 'rgba(255,255,255,0.85)', borderBottom: '1px solid #E5E5EA', backdropFilter: 'blur(12px)' }}>
         <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(108,99,255,0.2)', border: '1px solid rgba(108,99,255,0.4)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" strokeWidth="2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(0,122,255,0.1)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2.5">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
           </div>
-          <span className="text-sm font-bold tracking-tight" style={{ color: '#E8E8F0' }}>
-            Lead<span style={{ color: '#6C63FF' }}>Finder</span>
+          <span className="text-sm font-bold tracking-tight" style={{ color: '#1D1D1F' }}>
+            Lead<span style={{ color: '#007AFF' }}>Finder</span>
           </span>
-          <span
-            className="px-2 py-0.5 rounded text-xs font-medium"
-            style={{ background: 'rgba(108,99,255,0.12)', color: '#6C63FF', border: '1px solid rgba(108,99,255,0.2)' }}
-          >
-            Demo
+          <span className="px-2 py-0.5 rounded-md text-xs font-medium"
+            style={{ background: 'rgba(0,122,255,0.08)', color: '#007AFF' }}>
+            {isLive ? 'Live' : 'Demo'}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           {searched && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => exportExcel(visibleBusinesses)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{ background: '#21253A', color: '#8B8FA8', border: '1px solid #2A2D3E' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4ECDC4'; e.currentTarget.style.color = '#4ECDC4'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2A2D3E'; e.currentTarget.style.color = '#8B8FA8'; }}
-                title="Als Excel exportieren"
-              >
+            <div className="flex gap-1.5">
+              <button onClick={() => exportExcel(visibleBusinesses)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all"
+                style={{ background: '#F5F5F7', color: '#6E6E73', border: '1.5px solid #E5E5EA' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#34C759'; e.currentTarget.style.color = '#34C759'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E5E5EA'; e.currentTarget.style.color = '#6E6E73'; }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
@@ -245,14 +228,11 @@ export default function App() {
                 </svg>
                 Excel
               </button>
-              <button
-                onClick={() => exportCSV(visibleBusinesses)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{ background: '#21253A', color: '#8B8FA8', border: '1px solid #2A2D3E' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#6C63FF'; e.currentTarget.style.color = '#6C63FF'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2A2D3E'; e.currentTarget.style.color = '#8B8FA8'; }}
-                title="Als CSV exportieren"
-              >
+              <button onClick={() => exportCSV(visibleBusinesses)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all"
+                style={{ background: '#F5F5F7', color: '#6E6E73', border: '1.5px solid #E5E5EA' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#007AFF'; e.currentTarget.style.color = '#007AFF'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E5E5EA'; e.currentTarget.style.color = '#6E6E73'; }}>
                 CSV
               </button>
             </div>
@@ -262,81 +242,67 @@ export default function App() {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* Status banner */}
-        <div
-          className="rounded-lg px-4 py-2.5 mb-5 flex items-start gap-2.5 text-xs"
+        <div className="rounded-2xl px-4 py-3 mb-5 flex items-start gap-2.5 text-xs"
           style={{
-            background: isLive ? 'rgba(78,205,196,0.08)' : 'rgba(108,99,255,0.08)',
-            border: `1px solid ${isLive ? 'rgba(78,205,196,0.25)' : 'rgba(108,99,255,0.2)'}`,
-          }}
-        >
+            background: isLive ? 'rgba(52,199,89,0.06)' : 'rgba(0,122,255,0.06)',
+            border: `1.5px solid ${isLive ? 'rgba(52,199,89,0.2)' : 'rgba(0,122,255,0.15)'}`,
+          }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke={isLive ? '#4ECDC4' : '#6C63FF'} strokeWidth="2" className="mt-0.5 shrink-0">
+            stroke={isLive ? '#34C759' : '#007AFF'} strokeWidth="2" className="mt-0.5 shrink-0">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <span style={{ color: '#8B8FA8' }}>
+          <span style={{ color: '#6E6E73' }}>
             {isLive ? (
-              <><span style={{ color: '#4ECDC4', fontWeight: 600 }}>Live-Modus:</span>{' '}
-              Echte Google Places Daten · PageSpeed Scores in Echtzeit berechnet.</>
+              <><span style={{ color: '#34C759', fontWeight: 600 }}>Live-Modus:</span>{' '}
+              Echte Daten via Apify · Website-Scores in Echtzeit berechnet.</>
             ) : (
-              <><span style={{ color: '#6C63FF', fontWeight: 600 }}>Demo-Modus:</span>{' '}
-              Zeigt Beispieldaten für die Region Trier. Für echte Daten: Backend mit{' '}
-              <code style={{ color: '#6C63FF' }}>npm run dev:all</code> starten und{' '}
-              <code style={{ color: '#6C63FF' }}>.env</code> mit Google API Key befüllen.</>
+              <><span style={{ color: '#007AFF', fontWeight: 600 }}>Demo-Modus:</span>{' '}
+              Beispieldaten für die Region Trier. Für echte Daten:{' '}
+              <code style={{ color: '#007AFF' }}>npm run dev:all</code> starten und{' '}
+              <code style={{ color: '#007AFF' }}>.env</code> mit Apify Token befüllen.</>
             )}
           </span>
         </div>
 
         {/* API error */}
         {apiError && (
-          <div className="rounded-lg px-4 py-2.5 mb-4 flex items-start gap-2.5 text-xs"
-            style={{ background: 'rgba(255,77,109,0.08)', border: '1px solid rgba(255,77,109,0.25)' }}>
+          <div className="rounded-2xl px-4 py-3 mb-4 flex items-start gap-2.5 text-xs"
+            style={{ background: 'rgba(255,59,48,0.06)', border: '1.5px solid rgba(255,59,48,0.2)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="#FF4D6D" strokeWidth="2" className="mt-0.5 shrink-0">
+              stroke="#FF3B30" strokeWidth="2" className="mt-0.5 shrink-0">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="8" x2="12" y2="12"/>
               <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            <span style={{ color: '#FF4D6D' }}>
-              <span style={{ fontWeight: 600 }}>API Fehler:</span> {apiError} — Demo-Daten werden angezeigt.
+            <span style={{ color: '#FF3B30' }}>
+              <span style={{ fontWeight: 600 }}>Fehler:</span> {apiError} — Demo-Daten werden angezeigt.
             </span>
           </div>
         )}
 
         {/* Page title */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1" style={{ color: '#E8E8F0' }}>
-            Business Intelligence
+        <div className="mb-5">
+          <h1 className="text-2xl font-bold mb-1" style={{ color: '#1D1D1F' }}>
+            Lead-Recherche
           </h1>
-          <p className="text-sm" style={{ color: '#8B8FA8' }}>
-            Identifiziere lokale Unternehmen mit Web-Potenzial und priorisiere deine Akquise.
+          <p className="text-sm" style={{ color: '#6E6E73' }}>
+            Lokale Unternehmen mit Web-Potenzial finden und priorisieren.
           </p>
         </div>
 
-        {/* Search */}
-        <SearchPanel
-          config={searchConfig}
-          onChange={handleConfigChange}
-          onSearch={handleSearch}
-          loading={loading}
-        />
+        <SearchPanel config={searchConfig} onChange={handleConfigChange}
+          onSearch={handleSearch} loading={loading} />
 
-        {/* Results */}
         {searched && (
           <>
             <StatsBar businesses={businesses} />
 
-            <div
-              className="rounded-xl p-4 mb-4"
-              style={{ background: '#1A1D27', border: '1px solid #2A2D3E' }}
-            >
-              <FilterBar
-                filters={filters}
-                onChange={handleFilterChange}
-                resultCount={visibleBusinesses.length}
-                totalCount={businesses.length}
-              />
+            <div className="rounded-2xl p-4 mb-4"
+              style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
+              <FilterBar filters={filters} onChange={handleFilterChange}
+                resultCount={visibleBusinesses.length} totalCount={businesses.length} />
             </div>
 
             {visibleBusinesses.length === 0 ? (
@@ -344,11 +310,7 @@ export default function App() {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {visibleBusinesses.map((b) => (
-                  <BusinessCard
-                    key={b.id}
-                    business={b}
-                    onClick={() => setSelected(b.id)}
-                  />
+                  <BusinessCard key={b.id} business={b} onClick={() => setSelected(b.id)} />
                 ))}
               </div>
             )}
@@ -356,13 +318,9 @@ export default function App() {
         )}
       </main>
 
-      {/* Detail modal */}
       {selectedBusiness && (
-        <DetailModal
-          business={selectedBusiness}
-          onClose={() => setSelected(null)}
-          onUpdate={handleUpdate}
-        />
+        <DetailModal business={selectedBusiness}
+          onClose={() => setSelected(null)} onUpdate={handleUpdate} />
       )}
     </div>
   );

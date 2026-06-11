@@ -1,4 +1,3 @@
-// Weights must sum to 1.0
 const WEIGHTS = {
   modernität: 0.30,
   mobile: 0.25,
@@ -19,11 +18,11 @@ export function computeScore(rawScores) {
 }
 
 export function getPriority(business) {
-  if (!business.website) return 'HIGH';
+  if (!business.website) return 'HOCH';
   const score = computeScore(business.rawScores);
-  if (score === null || score < 4) return 'HIGH';
-  if (score <= 6) return 'MEDIUM';
-  return 'LOW';
+  if (score === null || score < 4) return 'HOCH';
+  if (score <= 6) return 'MITTEL';
+  return 'NIEDRIG';
 }
 
 export function enrichBusiness(b) {
@@ -33,20 +32,20 @@ export function enrichBusiness(b) {
 }
 
 export function scoreColor(score) {
-  if (score === null) return '#FF4D6D';
-  if (score < 4) return '#FF4D6D';
-  if (score <= 6) return '#FFB347';
-  return '#4ECDC4';
+  if (score === null) return '#FF3B30';
+  if (score < 4) return '#FF3B30';
+  if (score <= 6) return '#FF9500';
+  return '#34C759';
 }
 
 export function priorityColor(p) {
-  if (p === 'HIGH') return '#FF4D6D';
-  if (p === 'MEDIUM') return '#FFB347';
-  return '#4ECDC4';
+  if (p === 'HOCH') return '#FF3B30';
+  if (p === 'MITTEL') return '#FF9500';
+  return '#34C759';
 }
 
 export function priorityBg(p) {
-  if (p === 'HIGH') return 'rgba(255,77,109,0.15)';
-  if (p === 'MEDIUM') return 'rgba(255,179,71,0.15)';
-  return 'rgba(78,205,196,0.15)';
+  if (p === 'HOCH') return 'rgba(255,59,48,0.1)';
+  if (p === 'MITTEL') return 'rgba(255,149,0,0.1)';
+  return 'rgba(52,199,89,0.1)';
 }
