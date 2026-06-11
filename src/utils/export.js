@@ -18,6 +18,7 @@ function buildRows(businesses) {
     Score_Conversion: b.rawScores?.conversion ?? '',
     GESAMT_SCORE: b.gesamtScore ?? '',
     Priorität: b.priorität ?? '',
+    Kontaktiert: b.kontaktiert ? 'Ja' : 'Nein',
     Notizen: b.notizen ?? '',
   }));
 }
@@ -43,6 +44,7 @@ export function exportExcel(businesses) {
     { wch: 17 }, // Score_Conversion
     { wch: 14 }, // GESAMT_SCORE
     { wch: 12 }, // Priorität
+    { wch: 13 }, // Kontaktiert
     { wch: 32 }, // Notizen
   ];
 
