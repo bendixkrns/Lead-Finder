@@ -93,38 +93,21 @@ function RegionAutocomplete({ value, onChange }) {
       <label className="block text-xs font-medium mb-1.5" style={{ color: '#6E6E73' }}>
         Region / Stadt
       </label>
-      <div style={{ position: 'relative' }}>
-        <input
-          type="text"
-          value={query}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
-          placeholder="PLZ oder Stadt …"
-          autoComplete="off"
-          className="w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
-          style={{
-            background: '#F5F5F7',
-            border: `1.5px solid ${open ? '#007AFF' : '#E5E5EA'}`,
-            color: '#1D1D1F',
-            paddingRight: '44px',
-          }}
-        />
-        <span
-          style={{
-            position: 'absolute',
-            right: '10px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: '11px',
-            fontWeight: 600,
-            color: '#8E8E93',
-            pointerEvents: 'none',
-          }}
-        >
-          🇩🇪 DE
-        </span>
-      </div>
+      <input
+        type="text"
+        value={query}
+        onChange={handleInput}
+        onKeyDown={handleKeyDown}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        placeholder="PLZ oder Stadt …"
+        autoComplete="off"
+        className="w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
+        style={{
+          background: '#F5F5F7',
+          border: `1.5px solid ${open ? '#007AFF' : '#E5E5EA'}`,
+          color: '#1D1D1F',
+        }}
+      />
       {open && (
         <div
           style={{
