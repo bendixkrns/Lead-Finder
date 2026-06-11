@@ -10,8 +10,8 @@ const router = Router();
 router.post('/search', async (req, res) => {
   const { branche, region, radius = 25 } = req.body;
 
-  if (!branche?.trim() || !region?.trim()) {
-    return res.status(400).json({ error: 'Branche und Region sind erforderlich.' });
+  if (!region?.trim()) {
+    return res.status(400).json({ error: 'Region ist erforderlich.' });
   }
 
   const hasApify  = !!process.env.APIFY_TOKEN;

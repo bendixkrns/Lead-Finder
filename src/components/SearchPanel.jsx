@@ -170,13 +170,13 @@ export default function SearchPanel({ config, onChange, onSearch, loading }) {
         {/* Branche */}
         <div>
           <label className="block text-xs font-medium mb-1.5" style={{ color: '#6E6E73' }}>
-            Branche / Industrie
+            Branche <span style={{ fontWeight: 400, color: '#AEAEB2' }}>(optional)</span>
           </label>
           <input
             type="text"
             value={config.branche}
             onChange={(e) => onChange({ branche: e.target.value })}
-            placeholder="z.B. Elektriker, Zahnarzt …"
+            placeholder="z.B. Elektriker — oder leer lassen"
             className="w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
             style={{ background: '#F5F5F7', border: '1.5px solid #E5E5EA', color: '#1D1D1F' }}
             onFocus={(e) => (e.target.style.borderColor = '#007AFF')}
