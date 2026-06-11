@@ -137,7 +137,7 @@ const TAG_MAP = {
   it:                   [['office','it']],
 };
 
-export async function searchBusinessesOSM(branche, region, radiusKm) {
+export async function searchBusinessesOSM(branche, region, radiusKm, limit = 50) {
   const location = await geocode(region);
   if (!location) {
     console.log(`OSM: Geocoding für "${region}" fehlgeschlagen`);
@@ -179,8 +179,7 @@ out body;`;
   const data = await res.json();
   const results = (data.elements ?? []).map(normalizeElement).filter(Boolean);
 
-  // Cap fallback results to avoid flooding the UI
-  return tags.length ? results : results.slice(0, 50);
+  return results.slice(0, limit);
 }
 
 async function fetchOverpass(query) {

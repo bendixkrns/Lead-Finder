@@ -90,7 +90,7 @@ function EmptyState({ hasFilters, onReset }) {
 
 // ─── App ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [searchConfig, setSearchConfig] = useState({ branche: '', region: 'Trier', radius: 25 });
+  const [searchConfig, setSearchConfig] = useState({ branche: '', region: 'Trier', radius: 25, limit: 50 });
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [businesses, dispatch] = useReducer(businessReducer, [], () =>
     RAW_BUSINESSES.map(enrichBusiness)

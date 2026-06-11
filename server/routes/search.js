@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { searchBusinesses } from '../services/places.js';
 import { searchBusinessesApify } from '../services/apify.js';
+import { searchBusinessesYelp } from '../services/yelp.js';
 import { searchBusinessesOSM } from '../services/overpass.js';
 import { enrichWithPageSpeed } from '../services/pagespeed.js';
 import { deduplicateBusinesses } from '../services/deduplicator.js';
@@ -8,7 +9,7 @@ import { deduplicateBusinesses } from '../services/deduplicator.js';
 const router = Router();
 
 router.post('/search', async (req, res) => {
-  const { branche, region, radius = 25 } = req.body;
+  const { branche, region, radius = 25, limit = 50 } = req.body;
 
   if (!region?.trim()) {
     return res.status(400).json({ error: 'Region ist erforderlich.' });
@@ -16,33 +17,45 @@ router.post('/search', async (req, res) => {
 
   const hasApify  = !!process.env.APIFY_TOKEN;
   const hasGoogle = !!process.env.GOOGLE_API_KEY;
+  const hasYelp   = !!process.env.YELP_API_KEY;
+  const cap       = Math.min(Number(limit) || 50, 200);
 
   try {
-    const tag = branche.trim();
+    const tag = branche?.trim() ?? '';
     const reg = region.trim();
     const rad = Number(radius);
 
-    // All sources run in parallel — individual failures degrade gracefully
-    const [primaryResults, osmResults] = await Promise.all([
+    const [apifyResults, googleResults, yelpResults, osmResults] = await Promise.all([
       hasApify
         ? searchBusinessesApify(tag, reg)
             .then(r => r.map(b => ({ ...b, source: 'Apify' })))
             .catch(err => { console.error('Apify:', err.message); return []; })
-        : searchBusinesses(tag, reg, rad)
-            .then(r => r.map(b => ({ ...b, source: 'Google' })))
-            .catch(err => { console.error('Google:', err.message); return []; }),
+        : [],
 
-      searchBusinessesOSM(tag, reg, rad)
+      hasGoogle
+        ? searchBusinesses(tag, reg, rad)
+            .then(r => r.map(b => ({ ...b, source: 'Google' })))
+            .catch(err => { console.error('Google:', err.message); return []; })
+        : [],
+
+      hasYelp
+        ? searchBusinessesYelp(tag, reg, rad)
+            .catch(err => { console.error('Yelp:', err.message); return []; })
+        : [],
+
+      searchBusinessesOSM(tag, reg, rad, cap)
         .catch(err => { console.error('OSM:', err.message); return []; }),
     ]);
 
-    const combined      = [...primaryResults, ...osmResults];
-    const deduplicated  = deduplicateBusinesses(combined);
-    const enriched      = await enrichWithPageSpeed(deduplicated);
+    const combined     = [...apifyResults, ...googleResults, ...yelpResults, ...osmResults];
+    const deduplicated = deduplicateBusinesses(combined);
+    const enriched     = await enrichWithPageSpeed(deduplicated);
 
     const activeSources = [
-      hasApify ? 'Apify' : hasGoogle ? 'Google' : null,
-      osmResults.length ? 'OSM' : null,
+      hasApify  && apifyResults.length  ? 'Apify'  : null,
+      hasGoogle && googleResults.length ? 'Google' : null,
+      hasYelp   && yelpResults.length   ? 'Yelp'   : null,
+      osmResults.length                 ? 'OSM'    : null,
     ].filter(Boolean);
 
     res.json({

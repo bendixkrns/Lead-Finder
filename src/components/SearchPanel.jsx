@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const RADIUS_OPTIONS = [10, 25, 50, 100];
+const LIMIT_OPTIONS  = [10, 25, 50, 100, 200];
 const PLZ_API = 'https://openplzapi.org/de/Localities';
 
 // ─── PLZ Autocomplete ────────────────────────────────────────────────────────
@@ -149,6 +150,46 @@ function RegionAutocomplete({ value, onChange }) {
   );
 }
 
+// ─── Advanced Options ────────────────────────────────────────────────────────
+function AdvancedOptions({ config, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-xs transition-all"
+        style={{ color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+          style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+        Erweiterte Optionen
+      </button>
+      {open && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs" style={{ color: '#6E6E73' }}>Max. Ergebnisse:</span>
+          {LIMIT_OPTIONS.map((l) => (
+            <button
+              key={l}
+              onClick={() => onChange({ limit: l })}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+              style={{
+                background: config.limit === l ? 'rgba(0,122,255,0.1)' : 'transparent',
+                border: `1.5px solid ${config.limit === l ? '#007AFF' : '#E5E5EA'}`,
+                color: config.limit === l ? '#007AFF' : '#6E6E73',
+                cursor: 'pointer',
+              }}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── SearchPanel ─────────────────────────────────────────────────────────────
 export default function SearchPanel({ config, onChange, onSearch, loading }) {
   const idx = RADIUS_OPTIONS.indexOf(config.radius);
@@ -226,10 +267,12 @@ export default function SearchPanel({ config, onChange, onSearch, loading }) {
         </div>
       </div>
 
+      <AdvancedOptions config={config} onChange={onChange} />
+
       <button
         onClick={onSearch}
         disabled={loading}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all mt-4"
         style={{
           background: loading ? '#C7C7CC' : '#007AFF',
           color: '#FFFFFF',
