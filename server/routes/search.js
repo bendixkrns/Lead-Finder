@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { searchBusinesses } from '../services/places.js';
 import { searchBusinessesApify } from '../services/apify.js';
-import { searchBusinessesYelp } from '../services/yelp.js';
 import { searchBusinessesOSM } from '../services/overpass.js';
 import { enrichWithPageSpeed } from '../services/pagespeed.js';
 import { deduplicateBusinesses } from '../services/deduplicator.js';
@@ -17,7 +16,6 @@ router.post('/search', async (req, res) => {
 
   const hasApify  = !!process.env.APIFY_TOKEN;
   const hasGoogle = !!process.env.GOOGLE_API_KEY;
-  const hasYelp   = !!process.env.YELP_API_KEY;
   const cap       = Math.min(Number(limit) || 50, 200);
 
   try {
@@ -25,7 +23,7 @@ router.post('/search', async (req, res) => {
     const reg = region.trim();
     const rad = Number(radius);
 
-    const [apifyResults, googleResults, yelpResults, osmResults] = await Promise.all([
+    const [apifyResults, googleResults, osmResults] = await Promise.all([
       hasApify
         ? searchBusinessesApify(tag, reg)
             .then(r => r.map(b => ({ ...b, source: 'Apify' })))
@@ -38,23 +36,17 @@ router.post('/search', async (req, res) => {
             .catch(err => { console.error('Google:', err.message); return []; })
         : [],
 
-      hasYelp
-        ? searchBusinessesYelp(tag, reg, rad)
-            .catch(err => { console.error('Yelp:', err.message); return []; })
-        : [],
-
       searchBusinessesOSM(tag, reg, rad, cap)
         .catch(err => { console.error('OSM:', err.message); return []; }),
     ]);
 
-    const combined     = [...apifyResults, ...googleResults, ...yelpResults, ...osmResults];
+    const combined     = [...apifyResults, ...googleResults, ...osmResults];
     const deduplicated = deduplicateBusinesses(combined);
     const enriched     = await enrichWithPageSpeed(deduplicated);
 
     const activeSources = [
       hasApify  && apifyResults.length  ? 'Apify'  : null,
       hasGoogle && googleResults.length ? 'Google' : null,
-      hasYelp   && yelpResults.length   ? 'Yelp'   : null,
       osmResults.length                 ? 'OSM'    : null,
     ].filter(Boolean);
 
