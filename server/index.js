@@ -15,8 +15,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
-if (!process.env.GOOGLE_API_KEY) {
-  console.warn('⚠  GOOGLE_API_KEY not set – /api/search will return an error');
+const hasApify = !!process.env.APIFY_TOKEN;
+const hasGoogle = !!process.env.GOOGLE_API_KEY;
+if (!hasApify && !hasGoogle) {
+  console.warn('⚠  Weder APIFY_TOKEN noch GOOGLE_API_KEY gesetzt – /api/search gibt Fehler zurück');
+} else {
+  console.log(`✓ Datenquelle: ${hasApify ? 'Apify' : 'Google Places API'}`);
 }
 
 app.use('/api', searchRouter);
