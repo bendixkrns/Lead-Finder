@@ -263,9 +263,8 @@ export default function App() {
               </>
             ) : (
               <><span style={{ color: '#007AFF', fontWeight: 600 }}>Demo-Modus:</span>{' '}
-              Beispieldaten für die Region Trier. Für echte Daten:{' '}
-              <code style={{ color: '#007AFF' }}>npm run dev:all</code> starten und{' '}
-              <code style={{ color: '#007AFF' }}>.env</code> mit Apify Token befüllen.</>
+              Beispieldaten für die Region Trier. Branche und Region eingeben, dann auf Suchen klicken — echte Daten werden live geladen.</>
+
             )}
           </span>
         </div>
