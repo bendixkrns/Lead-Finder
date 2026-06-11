@@ -80,7 +80,7 @@ const TAG_MAP = {
   // Friseur / Beauty
   friseur:              [['shop','hairdresser'],['shop','beauty']],
   frisör:               [['shop','hairdresser']],
-  friseursal on:        [['shop','hairdresser']],
+  friseursalon:         [['shop','hairdresser']],
   kosmetik:             [['shop','beauty'],['shop','cosmetics']],
   kosmetikstudio:       [['shop','beauty']],
   nagelstudio:          [['shop','nail_salon']],
