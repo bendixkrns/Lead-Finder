@@ -1,15 +1,179 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const RADIUS_OPTIONS = [10, 25, 50, 100];
+const PLZ_URL =
+  'https://raw.githubusercontent.com/zauberware/postal-codes-json-xml-csv/master/data/DE/zipcodes.de.json';
 
+// Module-level cache — fetched once per page load
+let _plzData = null;
+let _plzPromise = null;
+
+function loadPlzData() {
+  if (_plzData) return Promise.resolve(_plzData);
+  if (_plzPromise) return _plzPromise;
+  _plzPromise = fetch(PLZ_URL)
+    .then((r) => r.json())
+    .then((data) => {
+      _plzData = data;
+      return data;
+    });
+  return _plzPromise;
+}
+
+// ─── PLZ Autocomplete ────────────────────────────────────────────────────────
+function RegionAutocomplete({ value, onChange }) {
+  const [query, setQuery] = useState(value);
+  const [suggestions, setSuggestions] = useState([]);
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const [open, setOpen] = useState(false);
+  const dataRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Load dataset once
+  useEffect(() => {
+    loadPlzData().then((data) => {
+      dataRef.current = data;
+    });
+  }, []);
+
+  // Sync if parent resets the value
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
+  // Close on outside click
+  useEffect(() => {
+    function onMouseDown(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, []);
+
+  function handleInput(e) {
+    const q = e.target.value;
+    setQuery(q);
+    onChange({ region: q });
+
+    if (!q.trim() || !dataRef.current) {
+      setSuggestions([]);
+      setOpen(false);
+      return;
+    }
+
+    const lower = q.toLowerCase();
+    const isPlz = /^\d/.test(q);
+
+    const matches = dataRef.current
+      .filter((item) =>
+        isPlz
+          ? item.zipcode.startsWith(q)
+          : item.city.toLowerCase().startsWith(lower)
+      )
+      .slice(0, 8);
+
+    setSuggestions(matches);
+    setActiveIdx(-1);
+    setOpen(matches.length > 0);
+  }
+
+  function selectSuggestion(item) {
+    const formatted = `${item.zipcode} ${item.city}`;
+    setQuery(formatted);
+    onChange({ region: formatted });
+    setSuggestions([]);
+    setOpen(false);
+  }
+
+  function handleKeyDown(e) {
+    if (!open) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIdx((i) => Math.max(i - 1, -1));
+    } else if (e.key === 'Enter' && activeIdx >= 0) {
+      e.preventDefault();
+      selectSuggestion(suggestions[activeIdx]);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: '#6E6E73' }}>
+        Region / Stadt
+      </label>
+      <input
+        type="text"
+        value={query}
+        onChange={handleInput}
+        onKeyDown={handleKeyDown}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        placeholder="PLZ oder Stadt …"
+        autoComplete="off"
+        className="w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
+        style={{
+          background: '#F5F5F7',
+          border: `1.5px solid ${open ? '#007AFF' : '#E5E5EA'}`,
+          color: '#1D1D1F',
+        }}
+      />
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            background: '#FFFFFF',
+            border: '1.5px solid #E5E5EA',
+            borderRadius: '12px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+            zIndex: 100,
+            overflow: 'hidden',
+          }}
+        >
+          {suggestions.map((item, i) => (
+            <div
+              key={`${item.zipcode}-${item.city}-${i}`}
+              onMouseDown={() => selectSuggestion(item)}
+              style={{
+                padding: '8px 12px',
+                cursor: 'pointer',
+                background: i === activeIdx ? 'rgba(0,122,255,0.08)' : 'transparent',
+                borderBottom: i < suggestions.length - 1 ? '1px solid #F5F5F7' : 'none',
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ color: '#007AFF', fontWeight: 600, fontSize: '13px', minWidth: '46px' }}>
+                {item.zipcode}
+              </span>
+              <span style={{ color: '#1D1D1F', fontSize: '13px' }}>{item.city}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SearchPanel ─────────────────────────────────────────────────────────────
 export default function SearchPanel({ config, onChange, onSearch, loading }) {
   const idx = RADIUS_OPTIONS.indexOf(config.radius);
   const sliderIndex = idx === -1 ? 1 : idx;
 
   return (
-    <div className="rounded-2xl p-5 mb-5"
-      style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)' }}>
-
+    <div
+      className="rounded-2xl p-5 mb-5"
+      style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)' }}
+    >
       <div className="flex items-center gap-2 mb-4">
         <div className="w-1.5 h-4 rounded-full" style={{ background: '#007AFF' }} />
         <h2 className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#6E6E73' }}>
@@ -35,22 +199,8 @@ export default function SearchPanel({ config, onChange, onSearch, loading }) {
           />
         </div>
 
-        {/* Region */}
-        <div>
-          <label className="block text-xs font-medium mb-1.5" style={{ color: '#6E6E73' }}>
-            Region / Stadt
-          </label>
-          <input
-            type="text"
-            value={config.region}
-            onChange={(e) => onChange({ region: e.target.value })}
-            placeholder="z.B. Trier, München …"
-            className="w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
-            style={{ background: '#F5F5F7', border: '1.5px solid #E5E5EA', color: '#1D1D1F' }}
-            onFocus={(e) => (e.target.style.borderColor = '#007AFF')}
-            onBlur={(e) => (e.target.style.borderColor = '#E5E5EA')}
-          />
-        </div>
+        {/* Region mit Autocomplete */}
+        <RegionAutocomplete value={config.region} onChange={onChange} />
 
         {/* Radius Slider */}
         <div>
@@ -75,10 +225,10 @@ export default function SearchPanel({ config, onChange, onSearch, loading }) {
                   key={km}
                   className="absolute text-xs"
                   style={{
-                    left:      i === 0 ? 0 : i === 3 ? 'auto' : `${(i / 3) * 100}%`,
-                    right:     i === 3 ? 0 : 'auto',
+                    left: i === 0 ? 0 : i === 3 ? 'auto' : `${(i / 3) * 100}%`,
+                    right: i === 3 ? 0 : 'auto',
                     transform: i > 0 && i < 3 ? 'translateX(-50%)' : 'none',
-                    color:     i === sliderIndex ? '#007AFF' : '#C7C7CC',
+                    color: i === sliderIndex ? '#007AFF' : '#C7C7CC',
                     fontWeight: i === sliderIndex ? 600 : 400,
                     whiteSpace: 'nowrap',
                   }}
@@ -112,7 +262,8 @@ export default function SearchPanel({ config, onChange, onSearch, loading }) {
         ) : (
           <>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
             </svg>
             Recherche starten
           </>

@@ -17,12 +17,6 @@ router.post('/search', async (req, res) => {
   const hasApify  = !!process.env.APIFY_TOKEN;
   const hasGoogle = !!process.env.GOOGLE_API_KEY;
 
-  if (!hasApify && !hasGoogle) {
-    return res.status(503).json({
-      error: 'Kein API-Key konfiguriert. Bitte APIFY_TOKEN oder GOOGLE_API_KEY in der .env Datei setzen.',
-    });
-  }
-
   try {
     const tag = branche.trim();
     const reg = region.trim();
