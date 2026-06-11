@@ -100,6 +100,7 @@ export default function App() {
   const [searched, setSearched] = useState(true); // show mock data on load
   const [isLive, setIsLive] = useState(false);
   const [apiError, setApiError] = useState(null);
+  const [searchMeta, setSearchMeta] = useState(null); // { sources, duplicatesRemoved }
 
   const handleConfigChange = useCallback((patch) => {
     setSearchConfig((prev) => ({ ...prev, ...patch }));
@@ -122,11 +123,12 @@ export default function App() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `HTTP ${res.status}`);
       }
-      const { businesses: raw } = await res.json();
+      const { businesses: raw, sources, duplicatesRemoved } = await res.json();
       dispatch({ type: 'LOAD', businesses: raw.map(enrichBusiness) });
       setIsLive(true);
       setSearched(true);
       setFilters(DEFAULT_FILTERS);
+      setSearchMeta({ sources: sources ?? [], duplicatesRemoved: duplicatesRemoved ?? 0 });
     } catch (err) {
       setApiError(err.message);
       // Fall back to mock data so the UI is still usable
@@ -256,7 +258,9 @@ export default function App() {
           <span style={{ color: '#6E6E73' }}>
             {isLive ? (
               <><span style={{ color: '#34C759', fontWeight: 600 }}>Live-Modus:</span>{' '}
-              Echte Daten via Apify · Website-Scores in Echtzeit berechnet.</>
+              {searchMeta?.sources?.join(' + ') ?? 'Apify'} · Website-Scores in Echtzeit
+              {searchMeta?.duplicatesRemoved > 0 && <> · <span style={{ color: '#34C759' }}>{searchMeta.duplicatesRemoved} Duplikat{searchMeta.duplicatesRemoved > 1 ? 'e' : ''} zusammengeführt</span></>}
+              </>
             ) : (
               <><span style={{ color: '#007AFF', fontWeight: 600 }}>Demo-Modus:</span>{' '}
               Beispieldaten für die Region Trier. Für echte Daten:{' '}

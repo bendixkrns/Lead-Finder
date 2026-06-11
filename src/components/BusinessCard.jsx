@@ -5,7 +5,7 @@ import ScoreRing from './ScoreRing';
 
 export default function BusinessCard({ business, onClick }) {
   const { firma, adresse, telefon, email, website, googleBewertung, anzahlBewertungen,
-    gesamtScore, priorität, kontaktiert } = business;
+    gesamtScore, priorität, kontaktiert, sources } = business;
 
   return (
     <div
@@ -27,6 +27,16 @@ export default function BusinessCard({ business, onClick }) {
             <h3 className="text-sm font-semibold truncate" style={{ color: '#1D1D1F' }}>
               {firma}
             </h3>
+            {sources?.length > 0 && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs"
+                style={{
+                  background: sources.length > 1 ? 'rgba(108,99,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  color: sources.length > 1 ? '#6C63FF' : '#8E8E93',
+                  fontWeight: 500,
+                }}>
+                {sources.join('+')}
+              </span>
+            )}
             {kontaktiert && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs"
                 style={{ background: 'rgba(0,122,255,0.08)', color: '#007AFF' }}>

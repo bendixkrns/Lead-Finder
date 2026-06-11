@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { searchBusinesses } from '../services/places.js';
 import { searchBusinessesApify } from '../services/apify.js';
+import { searchBusinessesOSM } from '../services/overpass.js';
 import { enrichWithPageSpeed } from '../services/pagespeed.js';
+import { deduplicateBusinesses } from '../services/deduplicator.js';
 
 const router = Router();
 
@@ -12,7 +14,7 @@ router.post('/search', async (req, res) => {
     return res.status(400).json({ error: 'Branche und Region sind erforderlich.' });
   }
 
-  const hasApify = !!process.env.APIFY_TOKEN;
+  const hasApify  = !!process.env.APIFY_TOKEN;
   const hasGoogle = !!process.env.GOOGLE_API_KEY;
 
   if (!hasApify && !hasGoogle) {
@@ -22,12 +24,39 @@ router.post('/search', async (req, res) => {
   }
 
   try {
-    const businesses = hasApify
-      ? await searchBusinessesApify(branche.trim(), region.trim())
-      : await searchBusinesses(branche.trim(), region.trim(), Number(radius));
+    const tag = branche.trim();
+    const reg = region.trim();
+    const rad = Number(radius);
 
-    const enriched = await enrichWithPageSpeed(businesses);
-    res.json({ businesses: enriched, total: enriched.length, source: hasApify ? 'apify' : 'google' });
+    // All sources run in parallel — individual failures degrade gracefully
+    const [primaryResults, osmResults] = await Promise.all([
+      hasApify
+        ? searchBusinessesApify(tag, reg)
+            .then(r => r.map(b => ({ ...b, source: 'Apify' })))
+            .catch(err => { console.error('Apify:', err.message); return []; })
+        : searchBusinesses(tag, reg, rad)
+            .then(r => r.map(b => ({ ...b, source: 'Google' })))
+            .catch(err => { console.error('Google:', err.message); return []; }),
+
+      searchBusinessesOSM(tag, reg, rad)
+        .catch(err => { console.error('OSM:', err.message); return []; }),
+    ]);
+
+    const combined      = [...primaryResults, ...osmResults];
+    const deduplicated  = deduplicateBusinesses(combined);
+    const enriched      = await enrichWithPageSpeed(deduplicated);
+
+    const activeSources = [
+      hasApify ? 'Apify' : hasGoogle ? 'Google' : null,
+      osmResults.length ? 'OSM' : null,
+    ].filter(Boolean);
+
+    res.json({
+      businesses:        enriched,
+      total:             enriched.length,
+      sources:           activeSources,
+      duplicatesRemoved: combined.length - deduplicated.length,
+    });
   } catch (err) {
     console.error('Search error:', err.message);
     res.status(500).json({ error: err.message });
