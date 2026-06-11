@@ -1,24 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const RADIUS_OPTIONS = [10, 25, 50, 100];
-const PLZ_URL =
-  'https://raw.githubusercontent.com/zauberware/postal-codes-json-xml-csv/master/data/DE/zipcodes.de.json';
-
-// Module-level cache — fetched once per page load
-let _plzData = null;
-let _plzPromise = null;
-
-function loadPlzData() {
-  if (_plzData) return Promise.resolve(_plzData);
-  if (_plzPromise) return _plzPromise;
-  _plzPromise = fetch(PLZ_URL)
-    .then((r) => r.json())
-    .then((data) => {
-      _plzData = data;
-      return data;
-    });
-  return _plzPromise;
-}
+const PLZ_API = 'https://openplzapi.org/de/Localities';
 
 // ─── PLZ Autocomplete ────────────────────────────────────────────────────────
 function RegionAutocomplete({ value, onChange }) {
@@ -26,15 +9,8 @@ function RegionAutocomplete({ value, onChange }) {
   const [suggestions, setSuggestions] = useState([]);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [open, setOpen] = useState(false);
-  const dataRef = useRef(null);
   const containerRef = useRef(null);
-
-  // Load dataset once
-  useEffect(() => {
-    loadPlzData().then((data) => {
-      dataRef.current = data;
-    });
-  }, []);
+  const debounceRef = useRef(null);
 
   // Sync if parent resets the value
   useEffect(() => {
@@ -57,30 +33,33 @@ function RegionAutocomplete({ value, onChange }) {
     setQuery(q);
     onChange({ region: q });
 
-    if (!q.trim() || !dataRef.current) {
+    clearTimeout(debounceRef.current);
+
+    if (q.trim().length < 2) {
       setSuggestions([]);
       setOpen(false);
       return;
     }
 
-    const lower = q.toLowerCase();
-    const isPlz = /^\d/.test(q);
-
-    const matches = dataRef.current
-      .filter((item) =>
-        isPlz
-          ? item.zipcode.startsWith(q)
-          : item.city.toLowerCase().startsWith(lower)
-      )
-      .slice(0, 8);
-
-    setSuggestions(matches);
-    setActiveIdx(-1);
-    setOpen(matches.length > 0);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const isPlz = /^\d/.test(q);
+        const param = isPlz ? `postalCode=${encodeURIComponent(q)}` : `name=${encodeURIComponent(q)}`;
+        const res = await fetch(`${PLZ_API}?${param}&page=1&pageSize=8`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setSuggestions(Array.isArray(data) ? data : []);
+        setActiveIdx(-1);
+        setOpen(Array.isArray(data) && data.length > 0);
+      } catch {
+        setSuggestions([]);
+        setOpen(false);
+      }
+    }, 250);
   }
 
   function selectSuggestion(item) {
-    const formatted = `${item.zipcode} ${item.city}`;
+    const formatted = `${item.postalCode} ${item.name}`;
     setQuery(formatted);
     onChange({ region: formatted });
     setSuggestions([]);
@@ -140,7 +119,7 @@ function RegionAutocomplete({ value, onChange }) {
         >
           {suggestions.map((item, i) => (
             <div
-              key={`${item.zipcode}-${item.city}-${i}`}
+              key={`${item.postalCode}-${item.name}-${i}`}
               onMouseDown={() => selectSuggestion(item)}
               style={{
                 padding: '8px 12px',
@@ -153,9 +132,9 @@ function RegionAutocomplete({ value, onChange }) {
               }}
             >
               <span style={{ color: '#007AFF', fontWeight: 600, fontSize: '13px', minWidth: '46px' }}>
-                {item.zipcode}
+                {item.postalCode}
               </span>
-              <span style={{ color: '#1D1D1F', fontSize: '13px' }}>{item.city}</span>
+              <span style={{ color: '#1D1D1F', fontSize: '13px' }}>{item.name}</span>
             </div>
           ))}
         </div>
