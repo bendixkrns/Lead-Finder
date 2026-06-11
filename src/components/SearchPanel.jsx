@@ -60,7 +60,7 @@ export default function SearchPanel({ config, onChange, onSearch, loading }) {
               {config.radius} km
             </span>
           </label>
-          <div className="px-1 pt-1">
+          <div className="pt-1">
             <input
               type="range"
               min="0"
@@ -69,12 +69,19 @@ export default function SearchPanel({ config, onChange, onSearch, loading }) {
               value={sliderIndex}
               onChange={(e) => onChange({ radius: RADIUS_OPTIONS[parseInt(e.target.value)] })}
             />
-            <div className="flex justify-between mt-1">
+            <div className="relative mt-1" style={{ height: '16px' }}>
               {RADIUS_OPTIONS.map((km, i) => (
                 <span
                   key={km}
-                  className="text-xs"
-                  style={{ color: i === sliderIndex ? '#007AFF' : '#C7C7CC', fontWeight: i === sliderIndex ? 600 : 400 }}
+                  className="absolute text-xs"
+                  style={{
+                    left:      i === 0 ? 0 : i === 3 ? 'auto' : `${(i / 3) * 100}%`,
+                    right:     i === 3 ? 0 : 'auto',
+                    transform: i > 0 && i < 3 ? 'translateX(-50%)' : 'none',
+                    color:     i === sliderIndex ? '#007AFF' : '#C7C7CC',
+                    fontWeight: i === sliderIndex ? 600 : 400,
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   {km} km
                 </span>
