@@ -1,5 +1,10 @@
 const NOMINATIM = 'https://nominatim.openstreetmap.org';
-const OVERPASS  = 'https://overpass-api.de/api/interpreter';
+
+// Ordered list of Overpass mirrors — first one that responds wins
+const OVERPASS_MIRRORS = [
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
+];
 
 // German business keyword → OSM tag pairs
 const TAG_MAP = {
@@ -169,20 +174,33 @@ export async function searchBusinessesOSM(branche, region, radiusKm) {
 out body;`;
   }
 
-  const res = await fetch(OVERPASS, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `data=${encodeURIComponent(query)}`,
-    signal: AbortSignal.timeout(35000),
-  });
-
-  if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
+  const res = await fetchOverpass(query);
 
   const data = await res.json();
   const results = (data.elements ?? []).map(normalizeElement).filter(Boolean);
 
   // Cap fallback results to avoid flooding the UI
   return tags.length ? results : results.slice(0, 50);
+}
+
+async function fetchOverpass(query) {
+  let lastErr;
+  for (const url of OVERPASS_MIRRORS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(35000),
+      });
+      if (res.ok) return res;
+      lastErr = new Error(`Overpass ${new URL(url).hostname} HTTP ${res.status}`);
+    } catch (e) {
+      lastErr = e;
+      console.warn(`Overpass mirror ${url} fehlgeschlagen:`, e.message);
+    }
+  }
+  throw lastErr;
 }
 
 async function geocode(city) {
