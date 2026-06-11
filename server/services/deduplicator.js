@@ -61,4 +61,10 @@ function merge(target, source) {
 
 const normalizePhone   = (p) => p?.replace(/\D/g, '').slice(-10) || null;
 const normalizeWebsite = (w) => w?.toLowerCase().replace(/https?:\/\/(www\.)?/, '').replace(/\/$/, '') || null;
-const normalizeName    = (n) => n?.toLowerCase().replace(/[^a-zäöüß0-9]/g, '').slice(0, 20) || null;
+
+// Remove legal suffixes and filler words, then take first 15 significant chars
+const LEGAL = /\s*(gmbh|ag|kg|ohg|gbr|mbh|ug|co|&|und|e\.?k\.?|e\.?v\.?)\s*/gi;
+const normalizeName = (n) => n?.toLowerCase()
+  .replace(LEGAL, ' ')
+  .replace(/[^a-zäöüß0-9]/g, '')
+  .slice(0, 15) || null;

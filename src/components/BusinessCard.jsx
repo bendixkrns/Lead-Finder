@@ -97,7 +97,7 @@ export default function BusinessCard({ business, onClick }) {
         </div>
 
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <ScoreRing score={gesamtScore} size={48} />
+          <ScoreRing score={gesamtScore} hasWebsite={!!website} size={48} />
           <PriorityBadge priority={priorität} />
         </div>
       </div>

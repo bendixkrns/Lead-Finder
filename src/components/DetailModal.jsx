@@ -49,7 +49,7 @@ export default function DetailModal({ business, onClose, onUpdate }) {
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <ScoreRing score={business.gesamtScore} size={52} />
+            <ScoreRing score={business.gesamtScore} hasWebsite={!!business.website} size={52} />
             <button onClick={onClose}
               className="p-1.5 rounded-lg transition-colors"
               style={{ color: '#6E6E73', background: '#F5F5F7' }}>

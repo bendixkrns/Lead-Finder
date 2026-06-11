@@ -30,27 +30,27 @@ const DEFAULT_FILTERS = {
   sortDir: 'asc',
 };
 
-const PRIORITY_ORDER = { HOCH: 0, MITTEL: 1, NIEDRIG: 2 };
+const PRIORITY_ORDER = { HOCH: 0, MITTEL: 1, NIEDRIG: 2, 'N/A': 3 };
 
 // ─── Stats bar ─────────────────────────────────────────────────────────────
 function StatsBar({ businesses }) {
   const stats = useMemo(() => {
-    const hoch = businesses.filter((b) => b.priorität === 'HOCH').length;
+    const hoch   = businesses.filter((b) => b.priorität === 'HOCH').length;
     const mittel = businesses.filter((b) => b.priorität === 'MITTEL').length;
-    const niedrig = businesses.filter((b) => b.priorität === 'NIEDRIG').length;
+    const na     = businesses.filter((b) => b.priorität === 'N/A').length;
     const noSite = businesses.filter((b) => !b.website).length;
     const avgScore = businesses
       .filter((b) => b.gesamtScore !== null)
       .reduce((sum, b, _, arr) => sum + b.gesamtScore / arr.length, 0);
-    return { hoch, mittel, niedrig, noSite, avgScore: Math.round(avgScore * 10) / 10 };
+    return { hoch, mittel, na, noSite, avgScore: Math.round(avgScore * 10) / 10 };
   }, [businesses]);
 
   const tiles = [
-    { label: 'Hohe Priorität', value: stats.hoch, color: '#FF3B30', bg: 'rgba(255,59,48,0.06)' },
-    { label: 'Mittlere Priorität', value: stats.mittel, color: '#FF9500', bg: 'rgba(255,149,0,0.06)' },
-    { label: 'Niedrige Priorität', value: stats.niedrig, color: '#34C759', bg: 'rgba(52,199,89,0.06)' },
-    { label: 'Ohne Website', value: stats.noSite, color: '#FF3B30', bg: 'rgba(255,59,48,0.06)' },
-    { label: 'Ø Score', value: stats.avgScore || '–', color: '#007AFF', bg: 'rgba(0,122,255,0.06)' },
+    { label: 'Hohe Priorität',   value: stats.hoch,            color: '#FF3B30', bg: 'rgba(255,59,48,0.06)' },
+    { label: 'Mittlere Priorität', value: stats.mittel,         color: '#FF9500', bg: 'rgba(255,149,0,0.06)' },
+    { label: 'Nicht messbar',    value: stats.na,               color: '#8E8E93', bg: 'rgba(142,142,147,0.06)' },
+    { label: 'Ohne Website',     value: stats.noSite,           color: '#FF3B30', bg: 'rgba(255,59,48,0.06)' },
+    { label: 'Ø Score',          value: stats.avgScore || '–',  color: '#007AFF', bg: 'rgba(0,122,255,0.06)' },
   ];
 
   return (

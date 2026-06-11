@@ -1,8 +1,9 @@
 import React from 'react';
 import { scoreColor } from '../utils/scoring';
 
-export default function ScoreRing({ score, size = 52 }) {
-  if (score === null) {
+export default function ScoreRing({ score, hasWebsite = false, size = 52 }) {
+  if (score === null && !hasWebsite) {
+    // No website at all
     return (
       <div
         className="flex items-center justify-center rounded-full font-bold"
@@ -15,6 +16,25 @@ export default function ScoreRing({ score, size = 52 }) {
         }}
       >
         N/A
+      </div>
+    );
+  }
+
+  if (score === null && hasWebsite) {
+    // Website exists but PageSpeed couldn't score it
+    return (
+      <div
+        className="flex items-center justify-center rounded-full font-bold"
+        title="Website vorhanden, aber Score nicht messbar (z.B. Bot-Schutz aktiv)"
+        style={{
+          width: size, height: size,
+          background: 'rgba(142,142,147,0.08)',
+          color: '#8E8E93',
+          border: '2px dashed rgba(142,142,147,0.35)',
+          fontSize: size < 40 ? 9 : 11,
+        }}
+      >
+        ?
       </div>
     );
   }

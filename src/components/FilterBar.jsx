@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PRIORITY_OPTS = ['Alle', 'HOCH', 'MITTEL', 'NIEDRIG'];
+const PRIORITY_OPTS = ['Alle', 'HOCH', 'MITTEL', 'N/A', 'NIEDRIG'];
 const WEBSITE_OPTS = ['Alle', 'Ja', 'Nein'];
 const SORT_OPTS = [
   { value: 'priorität', label: 'Priorität' },
@@ -10,9 +10,10 @@ const SORT_OPTS = [
 ];
 
 const PRIORITY_COLORS = {
-  HOCH: { active: 'rgba(255,59,48,0.1)', border: '#FF3B30', text: '#FF3B30' },
-  MITTEL: { active: 'rgba(255,149,0,0.1)', border: '#FF9500', text: '#FF9500' },
-  NIEDRIG: { active: 'rgba(52,199,89,0.1)', border: '#34C759', text: '#34C759' },
+  HOCH:    { active: 'rgba(255,59,48,0.1)',   border: '#FF3B30', text: '#FF3B30' },
+  MITTEL:  { active: 'rgba(255,149,0,0.1)',   border: '#FF9500', text: '#FF9500' },
+  'N/A':   { active: 'rgba(142,142,147,0.1)', border: '#8E8E93', text: '#8E8E93' },
+  NIEDRIG: { active: 'rgba(52,199,89,0.1)',   border: '#34C759', text: '#34C759' },
 };
 
 function Chip({ active, onClick, children, pColor }) {
