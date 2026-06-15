@@ -4,7 +4,8 @@ const APIFY_BASE = 'https://api.apify.com/v2';
 const ACTOR      = 'compass~crawler-google-places';
 
 export async function searchBusinessesApify(branche, region, radiusKm = 25) {
-  const token = process.env.APIFY_TOKEN;
+  const token    = process.env.APIFY_TOKEN;
+  const isVercel = !!process.env.VERCEL;
 
   const location = await geocodeRegion(region);
   if (!location) throw new Error(`Apify: Geocoding für "${region}" fehlgeschlagen`);
@@ -23,15 +24,16 @@ export async function searchBusinessesApify(branche, region, radiusKm = 25) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      searchStringsArray: [searchString],
+      searchStringsArray:      [searchString],
       lat,
-      lng: lon,
+      lng:                     lon,
       zoom,
-      maxCrawledPlaces: 40, // fetch more, then filter by real radius
-      language: 'de',
-      countryCode: 'de',
-      maxImages: 0,
-      exportPlaceUrls: false,
+      maxCrawledPlacesPerSearch: isVercel ? 15 : 40, // correct param name
+      memoryMbytes:            1024,
+      language:                'de',
+      countryCode:             'de',
+      maxImages:               0,
+      exportPlaceUrls:         false,
     }),
   });
 
@@ -41,8 +43,7 @@ export async function searchBusinessesApify(branche, region, radiusKm = 25) {
   }
 
   const { data: run } = await runRes.json();
-  const isVercel  = !!process.env.VERCEL;
-  const datasetId = await waitForRun(run.id, token, isVercel ? 55 : 120);
+  const datasetId = await waitForRun(run.id, token, isVercel ? 45 : 120);
 
   const itemsRes = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?format=json`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -52,12 +53,11 @@ export async function searchBusinessesApify(branche, region, radiusKm = 25) {
 
   const items = await itemsRes.json();
 
-  // Strict radius filter using Haversine distance
   const results = items
     .map(normalizePlace)
     .filter(Boolean)
     .filter(b => {
-      if (b._lat == null || b._lng == null) return true; // keep if no coordinates
+      if (b._lat == null || b._lng == null) return true;
       const dist = haversineKm(lat, lon, b._lat, b._lng);
       if (dist > radiusKm) {
         console.log(`  Gefiltert (${Math.round(dist)}km > ${radiusKm}km): ${b.firma}`);
@@ -65,7 +65,7 @@ export async function searchBusinessesApify(branche, region, radiusKm = 25) {
       }
       return true;
     })
-    .map(({ _lat, _lng, ...rest }) => rest); // remove internal fields
+    .map(({ _lat, _lng, ...rest }) => rest);
 
   console.log(`  Apify: ${items.length} gescraped → ${results.length} im ${radiusKm}km Radius`);
   return results;
@@ -88,7 +88,7 @@ async function waitForRun(runId, token, timeoutSecs) {
     }
   }
 
-  throw new Error('Apify Run Timeout nach 120 Sekunden');
+  throw new Error(`Apify Run Timeout nach ${timeoutSecs} Sekunden`);
 }
 
 function normalizePlace(p) {
